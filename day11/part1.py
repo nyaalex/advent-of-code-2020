@@ -5,6 +5,8 @@ class GameBoard:
         self.max_y = 0
         self.t = 0
 
+        self.directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+
     def __repr__(self):
         return '\n'.join([''.join(i) for i in self.arr])
 
@@ -23,24 +25,14 @@ class GameBoard:
         board_file.close()
 
     def update(self):
-        new_board = [[0]*self.max_y for _ in range(self.max_x)]
+        new_board = [[0] * self.max_y for _ in range(self.max_x)]
         changed = False
 
         for x in range(self.max_x):
             for y in range(self.max_y):
                 current_cell = self.arr[x][y]
-                adj = []
-                for dx in range(-1, 2):
-                    for dy in range(-1, 2):
-                        sub_x = x + dx
-                        sub_y = y + dy
-                        if (sub_x, sub_y) != (x, y) and \
-                                sub_y not in (-1, self.max_y) and \
-                                sub_x not in (-1, self.max_x):
 
-                            adj.append(self.arr[sub_x][sub_y])
-
-                result = self.rule(current_cell, adj)
+                result = self.rule(x, y)
                 changed = changed or result != current_cell
                 new_board[x][y] = result
 
@@ -55,26 +47,38 @@ class GameBoard:
             count += row.count('#')
         return count
 
-    @staticmethod
-    def rule(current_cell, adjacent):
+    def rule(self, x, y):
         floor = '.'
         occupied = '#'
         empty = 'L'
+
+        current_cell = self.arr[x][y]
         if current_cell == floor:
             return floor
-        elif adjacent.count(occupied) >= 4:
+
+        occupied_count = 0
+        for dx, dy in self.directions:
+            sub_x, sub_y = x + dx, y + dy
+            if sub_y not in (-1, self.max_y) and \
+                    sub_x not in (-1, self.max_x):
+
+                if self.arr[sub_x][sub_y] == occupied:
+                    occupied_count += 1
+
+        if occupied_count >= 4:
             return empty
-        elif current_cell == empty and occupied not in adjacent:
+        elif current_cell == empty and occupied_count == 0:
             return occupied
         else:
             return current_cell
 
 
-board = GameBoard()
-board.load_board("input")
+if __name__ == '__main__':
+    board = GameBoard()
+    board.load_board("input")
 
-changed = True
-while changed:
-    changed = board.update()
+    has_changed = True
+    while has_changed:
+        has_changed = board.update()
 
-print(board.count_occupied())
+    print(board.count_occupied())
